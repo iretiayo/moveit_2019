@@ -219,6 +219,9 @@ void ChompOptimizer::initialize()
         }
         else
         {
+          if (parent_model->getParentLinkModel() == nullptr)
+            break;  // root link of urdf reached.
+
           parent_model = parent_model->getParentLinkModel()->getParentJointModel();
           for (const std::string& joint_name : joint_names_)
           {
