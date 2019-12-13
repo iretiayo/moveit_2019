@@ -117,24 +117,41 @@ bool ChompPlanner::solve(const planning_scene::PlanningSceneConstPtr& planning_s
     }
   }
 
-  // fill in an initial trajectory based on user choice from the chomp_config.yaml file
-  if (params.trajectory_initialization_method_.compare("quintic-spline") == 0)
-    trajectory.fillInMinJerk();
-  else if (params.trajectory_initialization_method_.compare("linear") == 0)
-    trajectory.fillInLinearInterpolation();
-  else if (params.trajectory_initialization_method_.compare("cubic") == 0)
-    trajectory.fillInCubicInterpolation();
-  else if (params.trajectory_initialization_method_.compare("fillTrajectory") == 0)
+  // Check if a trajectory seed is given
+  if (req.reference_trajectories.empty() || req.reference_trajectories[0].joint_trajectory.empty())
   {
-    if (!(trajectory.fillInFromTrajectory(*res.trajectory_[0])))
+    // fill in an initial trajectory based on user choice from the chomp_config.yaml file
+    if (params.trajectory_initialization_method_.compare("quintic-spline") == 0)
+      trajectory.fillInMinJerk();
+    else if (params.trajectory_initialization_method_.compare("linear") == 0)
+      trajectory.fillInLinearInterpolation();
+    else if (params.trajectory_initialization_method_.compare("cubic") == 0)
+      trajectory.fillInCubicInterpolation();
+    else if (params.trajectory_initialization_method_.compare("fillTrajectory") == 0)
     {
-      ROS_ERROR_STREAM_NAMED("chomp_planner", "Input trajectory has less than 2 points, "
+      if (!(trajectory.fillInFromTrajectory(*res.trajectory_[0])))
+      {
+        ROS_ERROR_STREAM_NAMED("chomp_planner", "Input trajectory has less than 2 points, "
+                                                "trajectory must contain at least start and goal state");
+        return false;
+      }
+    }
+    else
+      ROS_ERROR_STREAM_NAMED("chomp_planner", "invalid interpolation method specified in the chomp_planner file");
+  }
+  else
+  {
+    ROS_ERROR_STREAM_NAMED("chomp_planner", "Got a reference trajectory. Will use it as seed.");
+
+    auto seedRobotTraj = std::make_shared<robot_trajectory::RobotTrajectory>(planning_scene->getRobotModel(), req.group_name);
+    seedRobotTraj->setRobotTrajectoryMsg(start_state, req.reference_trajectories[0].joint_trajectory[0]);
+    if (!(trajectory.fillInFromTrajectory(*seedRobotTraj)))
+    {
+      ROS_ERROR_STREAM_NAMED("chomp_planner", "Seed trajectory is Invalid!, "
                                               "trajectory must contain at least start and goal state");
       return false;
     }
   }
-  else
-    ROS_ERROR_STREAM_NAMED("chomp_planner", "invalid interpolation method specified in the chomp_planner file");
 
   ROS_INFO_NAMED("chomp_planner", "CHOMP trajectory initialized using method: %s ",
                  (params.trajectory_initialization_method_).c_str());
