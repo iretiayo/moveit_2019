@@ -46,8 +46,12 @@ namespace chomp_interface
 class CHOMPPlannerManager : public planning_interface::PlannerManager
 {
 public:
+  mutable planning_scene::PlanningScenePtr _ps;
+  mutable bool first_call;
   CHOMPPlannerManager() : planning_interface::PlannerManager()
   {
+    _ps = nullptr;
+    first_call = true;
   }
 
   bool initialize(const robot_model::RobotModelConstPtr& model, const std::string& /*ns*/) override
@@ -80,13 +84,28 @@ public:
       return planning_interface::PlanningContextPtr();
     }
 
-    // create PlanningScene using hybrid collision detector
-    planning_scene::PlanningScenePtr ps = planning_scene->diff();
-    ps->setActiveCollisionDetector(collision_detection::CollisionDetectorAllocatorHybrid::create(), true);
+    // // create PlanningScene using hybrid collision detector
+    // planning_scene::PlanningScenePtr ps = planning_scene->diff();
+    // ps->setActiveCollisionDetector(collision_detection::CollisionDetectorAllocatorHybrid::create(), true);
+
+    // // retrieve and configure existing context
+    // const CHOMPPlanningContextPtr& context = planning_contexts_.at(req.group_name);
+    // context->setPlanningScene(ps);
+    // context->setMotionPlanRequest(req);
+    // error_code.val = moveit_msgs::MoveItErrorCodes::SUCCESS;
+    // return context;
+
+    if (first_call){
+      ROS_ERROR_NAMED("CHOMPPlannerManager", " FIRST CALL!!!!!!: %f .", ros::WallTime::now().toSec());
+
+      _ps = planning_scene->diff();
+      _ps->setActiveCollisionDetector(collision_detection::CollisionDetectorAllocatorHybrid::create(), true);
+      first_call = false;
+    }
 
     // retrieve and configure existing context
     const CHOMPPlanningContextPtr& context = planning_contexts_.at(req.group_name);
-    context->setPlanningScene(ps);
+    context->setPlanningScene(_ps);
     context->setMotionPlanRequest(req);
     error_code.val = moveit_msgs::MoveItErrorCodes::SUCCESS;
     return context;
