@@ -34,7 +34,7 @@
 
 from geometry_msgs.msg import Pose, PoseStamped
 from moveit_msgs.msg import RobotTrajectory, Grasp, PlaceLocation, Constraints, RobotState
-from moveit_msgs.msg import MoveItErrorCodes, TrajectoryConstraints, PlannerInterfaceDescription
+from moveit_msgs.msg import MoveItErrorCodes, TrajectoryConstraints, PlannerInterfaceDescription, GenericTrajectory
 from sensor_msgs.msg import JointState
 import rospy
 import tf
@@ -481,6 +481,20 @@ class MoveGroupCommander(object):
         else:
             raise MoveItCommanderException("Expected value in the range from 0 to 1 for scaling factor")
 
+    def set_reference_trajectories(self, value):
+        """ Specify the reference trajectories to be used """
+        if value is None:
+            self.clear_reference_trajectories()
+        else:
+            if type(value) is list and len(value) > 0 and type(value[0]) is GenericTrajectory:
+                self._g.set_reference_trajectories_from_msg([conversions.msg_to_string(x) for x in value])
+            else:
+                raise MoveItCommanderException("Unable to set trajectory constraints " + value)
+
+    def clear_reference_trajectories(self):
+        """ Specify that no trajectory constraints are to be used during motion planning """
+        self._g.clear_reference_trajectories()
+
     def go(self, joints=None, wait=True):
         """ Set the target of the group and then move the group to the specified target """
         if type(joints) is bool:
@@ -503,7 +517,7 @@ class MoveGroupCommander(object):
         else:
             return self._g.async_move()
 
-    def plan(self, joints=None):
+    def plan(self, joints=None, reference_trajectories=None):
         """ Return a tuple of the motion planning results such as
             (success flag : boolean, trajectory message : RobotTrajectory,
              planning time : float, error code : MoveitErrorCodes) """
@@ -518,6 +532,8 @@ class MoveGroupCommander(object):
                 self.set_joint_value_target(self.get_remembered_joint_values()[joints])
             except MoveItCommanderException:
                 self.set_joint_value_target(joints)
+
+        self.set_reference_trajectories(reference_trajectories)
 
         (error_code_msg, trajectory_msg, planning_time) = self._g.plan()
 

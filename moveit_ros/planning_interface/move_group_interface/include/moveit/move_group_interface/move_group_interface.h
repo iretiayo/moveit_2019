@@ -986,6 +986,14 @@ public:
       This removes any path constraints set in previous calls to setPathConstraints(). */
   void clearPathConstraints();
 
+  /** \brief Specify a set of reference trajectories to use.
+      This replaces any reference trajectories set in previous calls to setReferenceTrajectories(). */
+  void setReferenceTrajectories(const std::vector<moveit_msgs::GenericTrajectory>& reference_trajectories);
+
+  /** \brief Specify that no reference trajectories are to be used.
+      This removes any reference trajectories set in previous calls to setReferenceTrajectories(). */
+  void clearReferenceTrajectories();
+
   moveit_msgs::TrajectoryConstraints getTrajectoryConstraints() const;
   void setTrajectoryConstraints(const moveit_msgs::TrajectoryConstraints& constraint);
   void clearTrajectoryConstraints();
