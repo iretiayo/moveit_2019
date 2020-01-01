@@ -477,6 +477,15 @@ public:
     setPathConstraints(constraints_msg);
   }
 
+  void setReferenceTrajectoriesFromMsg(const bp::list& reference_trajectories_str)
+  {
+    int l = bp::len(reference_trajectories_str);
+    std::vector<moveit_msgs::GenericTrajectory> reference_trajectories_msg(l);
+    for (int i = 0; i < l; ++i)
+      py_bindings_tools::deserializeMsg(bp::extract<std::string>(reference_trajectories_str[i]), reference_trajectories_msg[i]);
+    setReferenceTrajectories(reference_trajectories_msg);
+  }
+
   std::string getPathConstraintsPython()
   {
     moveit_msgs::Constraints constraints_msg(getPathConstraints());
@@ -696,6 +705,9 @@ static void wrap_move_group_interface()
   move_group_interface_class.def("get_current_state_bounded", &MoveGroupInterfaceWrapper::getCurrentStateBoundedPython);
   move_group_interface_class.def("get_jacobian_matrix", &MoveGroupInterfaceWrapper::getJacobianMatrixPython,
                                  getJacobianMatrixOverloads());
+  move_group_interface_class.def("clear_reference_trajectories", &MoveGroupInterfaceWrapper::clearReferenceTrajectories);
+  move_group_interface_class.def("set_reference_trajectories_from_msg",
+                                 &MoveGroupInterfaceWrapper::setReferenceTrajectoriesFromMsg);
 }
 }  // namespace planning_interface
 }  // namespace moveit

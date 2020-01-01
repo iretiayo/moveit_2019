@@ -1007,6 +1007,7 @@ public:
     request.allowed_planning_time = allowed_planning_time_;
     request.planner_id = planner_id_;
     request.workspace_parameters = workspace_parameters_;
+    request.reference_trajectories = reference_trajectories_;
 
     if (considered_start_state_)
       robot_state::robotStateToRobotStateMsg(*considered_start_state_, request.start_state);
@@ -1151,6 +1152,16 @@ public:
     trajectory_constraints_.reset();
   }
 
+  void setReferenceTrajectories(const std::vector<moveit_msgs::GenericTrajectory>& reference_trajectories)
+  {
+    reference_trajectories_ = reference_trajectories;
+  }
+
+  void clearReferenceTrajectories()
+  {
+    reference_trajectories_.clear();
+  }
+
   std::vector<std::string> getKnownConstraints() const
   {
     while (initializing_constraints_)
@@ -1260,6 +1271,7 @@ private:
   ActiveTargetType active_target_;
   std::unique_ptr<moveit_msgs::Constraints> path_constraints_;
   std::unique_ptr<moveit_msgs::TrajectoryConstraints> trajectory_constraints_;
+  std::vector<moveit_msgs::GenericTrajectory> reference_trajectories_;
   std::string end_effector_link_;
   std::string pose_reference_frame_;
   std::string support_surface_;
@@ -2135,6 +2147,16 @@ void MoveGroupInterface::setTrajectoryConstraints(const moveit_msgs::TrajectoryC
 void MoveGroupInterface::clearTrajectoryConstraints()
 {
   impl_->clearTrajectoryConstraints();
+}
+
+void MoveGroupInterface::setReferenceTrajectories(const std::vector<moveit_msgs::GenericTrajectory>& reference_trajectories)
+{
+  impl_->setReferenceTrajectories(reference_trajectories);
+}
+
+void MoveGroupInterface::clearReferenceTrajectories()
+{
+  impl_->clearReferenceTrajectories();
 }
 
 void MoveGroupInterface::setConstraintsDatabase(const std::string& host, unsigned int port)
