@@ -417,7 +417,8 @@ void IterativeParabolicTimeParameterization::applyAccelerationConstraints(
               }
             }
             v1 = start_velocity ? v1 : (q2 - q1) / dt1;
-            v2 = (q3 - q2) / dt2;
+            // v2 = (q3 - q2) / dt2;
+            v2 = start_velocity ? v1 : (q3 - q2) / dt2;
             a = 2.0 * (v2 - v1) / (dt1 + dt2);
           }
 
